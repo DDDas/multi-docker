@@ -1,0 +1,22 @@
+sudo: required
+services:
+    - docker
+
+before_install:
+  - docker build -t dddas/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true dddas/react-test npm test
+
+after_success:
+  - docker build -t dddas/multi-client ./client
+  - docker build -t dddas/multi-nginx ./nginx
+  - docker build -t dddas/multi-server ./server
+  - docker build -t dddas/multi-worker ./worker
+# Push to Docker Hub
+- echo "$DOCKER_PASSWORD" ! docker login -u "$DOCKER_ID" --password-stdin
+# Take those images and Push to hub
+- docker push dddas/multi-client
+- docker push dddas/multi-server
+- docker push dddas/multi-nginx
+- docker push dddas/multi-worker
